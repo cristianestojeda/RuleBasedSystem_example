@@ -1,0 +1,83 @@
+package rules
+ 
+import com.sample.DroolsTest.Message;
+import function herramientas.Registro.pantalla;
+import model.*;
+import criterios.*;
+import criterios.CriteriosAplicables;
+import criterios.CriteriosAplicables.Capacidad;
+import model.InfoAbstractaCliente.RangoEdad;
+import model.InfoPersonal.EstadoCivil;
+
+// Reglas de especificacion de discapacidad
+rule "Regla especificacion discapacitados"
+  ruleflow-group "especifica"
+  lock-on-active true
+  when
+  	$cliente: Cliente( getInfoPersonal().isDiscapacidad())
+  	$capacidadPago: CriteriosAplicables(getTipoCriterio() == Capacidad.Pago)
+  then
+    modify($capacidadPago){
+    	setEstado(CriteriosAplicables.NOAPLICABLE);
+    }
+    pantalla( "Especificacion discapacitados: Pago: " + $capacidadPago.getEstado());
+end
+
+// Reglas de especificacion de familia numerosa
+rule "Regla especificacion familia numerosa"
+  ruleflow-group "especifica"
+  lock-on-active true
+  when
+  	$cliente: Cliente( getInfoPersonal().getNHijos() >= 3)
+  	$capacidadPago: CriteriosAplicables(getTipoCriterio() == Capacidad.Pago)
+  then
+    modify($capacidadPago){
+    	setEstado(CriteriosAplicables.NOAPLICABLE);
+    }
+    pantalla( "Especificacion familia numerosa: Pago: " + $capacidadPago.getEstado());
+end
+
+
+// Reglas de especificacion de personas mayores viudas
+rule "Regla especificacion mayores viudos"
+  ruleflow-group "especifica"
+  lock-on-active true
+  when
+  	$cliente: Cliente( getInfoAbstracta().getRangoEdad() == RangoEdad.Mayor &&
+  					getInfoPersonal().getEstadoCivil() == EstadoCivil.Viudo)
+  	$capacidadPago: CriteriosAplicables(getTipoCriterio() == Capacidad.Pago)
+  then
+    modify($capacidadPago){
+    	setEstado(CriteriosAplicables.NOAPLICABLE);
+    }
+    pantalla( "Especificacion mayores viudos: Pago: " + $capacidadPago.getEstado());
+end
+
+// Reglas de especificacion de restaurantes
+rule "Regla especificacion restaurante"
+  ruleflow-group "especifica"
+  lock-on-active true
+  when
+  	$restaurante: Restaurante( !isNecesidadMovilidad())
+  	$capacidadMovilidad: CriteriosAplicables(getTipoCriterio() == Capacidad.Movilidad)
+  then
+    modify($capacidadMovilidad){
+    	setEstado(CriteriosAplicables.NOAPLICABLE);
+    }
+    pantalla( "Especificacion restaurantes: Capacidad Movilidad: " + $capacidadMovilidad.getEstado());
+end
+
+// Reglas de especificacion de joven
+rule "Regla especificacion jovenes"
+  ruleflow-group "especifica"
+  lock-on-active true
+  when
+  	$cliente: Cliente( getInfoAbstracta().getRangoEdad() == RangoEdad.Joven)
+  	$capacidadMovilidad: CriteriosAplicables(getTipoCriterio() == Capacidad.Movilidad)
+  then
+    modify($capacidadMovilidad){
+    	setEstado(CriteriosAplicables.NOAPLICABLE);
+    }
+    pantalla( "Especificacion jovenes: Capacidad Movilidad: " + $capacidadMovilidad.getEstado());
+end
+

@@ -1,0 +1,76 @@
+package rules
+ 
+import com.sample.DroolsTest.Message;
+import function herramientas.Registro.pantalla;
+import model.*;
+import model.InfoAbstractaCliente.RangoEdad;
+import criterios.*;
+import criterios.CriteriosAplicables;
+import criterios.CriteriosAplicables.Capacidad;
+import function herramientas.OperacionesConjuntos.interseccion;
+import function herramientas.OperacionesConjuntos.interseccionComidas;
+import function herramientas.OperacionesConjuntos.tamanoConjunto;
+import function herramientas.OperacionesConjuntos.tamanoConjuntoComida;
+
+// Regla de validacion de capacidad de pago del cliente para realizar la actividad
+rule "Regla criterio pago"
+  ruleflow-group "verifica"
+  lock-on-active true
+  when
+  	$cliente: Cliente($costeMax: getInfoPersonal().getCosteMax());
+  	$restaurante: Restaurante($costeMax >= getCoste());
+  	$capacidadPago: CriteriosAplicables(getTipoCriterio() == Capacidad.Pago, !getEstado().equals("no aplicable"))
+  then
+    modify($capacidadPago){verificar();}
+    modify($capacidadPago){activar();}
+    pantalla( "Validacion Pago: "+ $capacidadPago.isVerificado());
+end
+
+// Regla de validacion: Relajamos las condiciones de pago para aquellos clientes jovenes
+rule "Regla criterio jovenes"
+  ruleflow-group "verifica"
+  lock-on-active true
+  when
+  	Cliente( getInfoAbstracta().getRangoEdad() == RangoEdad.Joven);
+  	Restaurante($costeRestaurante: getCoste())
+  	Cliente( getInfoPersonal().getCosteMax() >= $costeRestaurante*0.8);
+  	$capacidadPago: CriteriosAplicables(getTipoCriterio() == Capacidad.Pago, !getEstado().equals("no aplicable"))
+  then
+    modify($capacidadPago){verificar();}
+    modify($capacidadPago){activar();}
+    pantalla( "Validacion Pago relajado: "+ $capacidadPago.isVerificado());
+end
+
+// Regla de validacion: Comprobamos que el cliente disponga de capacidad de movilidad
+rule "Regla criterio 4"
+  ruleflow-group "verifica"
+  lock-on-active true
+  when
+	Cliente( getInfoAbstracta().isCapacidadMovilidad());
+	$capacidadMovilidad: CriteriosAplicables(getTipoCriterio() == Capacidad.Movilidad, !getEstado().equals("no aplicable"))
+  then
+    modify($capacidadMovilidad){verificar();}
+    modify($capacidadMovilidad){activar();}
+    pantalla( "Validacion movilidad: "+ $capacidadMovilidad.isVerificado());
+end
+
+// Regla de validacion: Obtiene el numero de gustos en comun del cliente y restaurante
+rule "Regla criterio 6"
+  ruleflow-group "verifica"
+  lock-on-active true
+  when
+  	Cliente($comidas: getGustos().getComidas());
+  	Restaurante($tipoRestaurante: getTipo());
+	eval(tamanoConjuntoComida($comidas) >= 1);
+	eval(tamanoConjuntoComida($tipoRestaurante) >= 1);
+	$comidasComun: CriteriosAplicables(getTipoCriterio() == Capacidad.Comidas, !getEstado().equals("no aplicable"))
+  then
+    modify($comidasComun){setnComunes(tamanoConjuntoComida(interseccionComidas($comidas,$tipoRestaurante)));}
+    modify($comidasComun) {verificar();}
+    modify($comidasComun){activar();}
+    pantalla( "Validacion comidas comun: "+ $comidasComun.isVerificado() + ", comidas comun: " + $comidasComun.getnComunes());
+end
+
+
+
+

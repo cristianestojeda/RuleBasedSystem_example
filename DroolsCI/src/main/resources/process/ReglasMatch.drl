@@ -1,0 +1,41 @@
+package rules
+ 
+import com.sample.DroolsTest.Message;
+import function herramientas.Registro.pantalla;
+import criterios.*;
+import criterios.CriteriosAplicables.Capacidad;
+
+
+rule "Regla de match completa"
+  ruleflow-group "match"
+  lock-on-active true
+  when
+    CriteriosAplicables( (getTipoCriterio() ==  Capacidad.Pago) && 
+    	(getEstado() == "no aplicable" || isVerificado()));
+    CriteriosAplicables( (getTipoCriterio() ==  Capacidad.Movilidad) && 
+    	(getEstado() == "no aplicable" || isVerificado()));
+    CriteriosAplicables( (getTipoCriterio() ==  Capacidad.Comidas) && 
+    	getnComunes() >= 2);
+  	$decision: PropuestaRestaurante();
+  then
+    modify($decision){
+    	aprobar();
+    }
+    pantalla( "Match completo: "+ $decision.isDecision() );
+end
+
+rule "Regla de match relajada"
+  ruleflow-group "match"
+  lock-on-active true
+  when
+    CriteriosAplicables( (getTipoCriterio() ==  Capacidad.Pago) && 
+    	(getEstado() == "no aplicable" || isVerificado()));
+    CriteriosAplicables( (getTipoCriterio() ==  Capacidad.Comidas) && 
+    	getnComunes() >= 4);
+  	$decision: PropuestaRestaurante();
+  then
+    modify($decision){
+    	aprobar();
+    }
+    pantalla( "Match relajado: "+ $decision.isDecision() );
+end

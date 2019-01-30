@@ -1,0 +1,61 @@
+package rules
+ 
+import com.sample.DroolsTest.Message;
+import function herramientas.Registro.pantalla;
+import model.*;
+import model.InfoAbstractaCliente.RangoEdad;
+
+
+// Reglas de abstraccion para el rango de edad
+rule "Abstrae edad joven"
+  ruleflow-group "abstrae"
+  lock-on-active true
+  when
+  	$cliente: Cliente( getInfoPersonal().getEdad() < 30 )
+  then
+    modify($cliente){
+    	getInfoAbstracta().setRangoEdad(RangoEdad.Joven);
+    }
+    pantalla( "Abstrae edad: "+ $cliente.getInfoAbstracta().getRangoEdad() );
+end
+
+rule "Abstrae edad adulto"
+  ruleflow-group "abstrae"
+  lock-on-active true
+  when
+  	$cliente: Cliente( getInfoPersonal().getEdad() >= 30 && getInfoPersonal().getEdad() <= 67)
+  then
+    modify($cliente){
+    	getInfoAbstracta().setRangoEdad(RangoEdad.Adulto);
+    }
+    pantalla( "Abstrae edad: "+ $cliente.getInfoAbstracta().getRangoEdad() );
+end
+
+rule "Abstrae edad mayor"
+  ruleflow-group "abstrae"
+  lock-on-active true
+  when
+  	$cliente: Cliente( getInfoPersonal().getEdad() > 67 )
+  then
+    modify($cliente){
+    	getInfoAbstracta().setRangoEdad(RangoEdad.Mayor);
+    }
+    modify($cliente){
+    	getInfoAbstracta().setCapacidadMovilidad(false);
+    }
+    pantalla( "Abstrae edad: "+ $cliente.getInfoAbstracta().getRangoEdad() +
+    	"\t Abstrae capacidad movilidad: " + $cliente.getInfoAbstracta().isCapacidadMovilidad());
+end
+
+// Reglas abstraccion capacidad movilidad
+rule "Abstrae capacidad movilidad"
+  ruleflow-group "abstrae"
+  lock-on-active true
+  when
+  	$cliente: Cliente( getInfoPersonal().isDiscapacidad() )
+  then
+    modify($cliente){
+    	getInfoAbstracta().setCapacidadMovilidad(false);
+    }
+    pantalla( "Abstrae capacidad movilidad: "+ $cliente.getInfoAbstracta().isCapacidadMovilidad() );
+end
